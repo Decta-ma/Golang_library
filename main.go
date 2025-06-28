@@ -125,8 +125,11 @@ func printpos(){
 3 : Searrch User
 4 : Search Book
 5 : Add Manager (need access)
-6 : Add Library (need access) // not write this part...
+6 : Add Library (need access) // not write this part yet...
 7 : loan book
+8 : All User
+9 : All Book // not write this part yet...
+
 0 : Close`)
 }
 
@@ -259,6 +262,15 @@ func loanBook(bookid int, userid int, db *gorm.DB){
 	}
 }
 
+func AllUser(db *gorm.DB) {
+	user := []User{}
+	var can, i int64
+	db.Find(&user).Count(&can)
+	for i = 0; i < can; i++{
+		fmt.Println(" user number : ", i + 1, "is : \n", "user id is : ", user[i].ID, "\n", "user name is : ", user[i].Name, "\n", "user age is : ", user[i].Age, "\n", "user NID is : ", user[i].Nid, "\n")
+	}
+}
+
 func Lib(db *gorm.DB){
 	for on := 1 ; on != 0; {
 		printpos()
@@ -307,6 +319,9 @@ func Lib(db *gorm.DB){
 			fmt.Scan(&bookid, &userid)
 			loanBook(bookid, userid, db)
 
+		}
+		if help == 8 {
+			AllUser(db)
 		}
 	}
 }
