@@ -125,7 +125,8 @@ func printpos(){
 3 : Searrch User
 4 : Search Book
 5 : Add Manager (need access)
-6 : Add Library (need access)
+6 : Add Library (need access) // not write this part...
+7 : loan book
 0 : Close`)
 }
 
@@ -236,7 +237,26 @@ func checkLib(password string, db *gorm.DB) bool {
 }
 
 func loanBook(bookid int, userid int, db *gorm.DB){
-	
+	user := User{}
+	book := Book{}
+	db.Where("id = ?", userid).First(&user)
+	if user.ID == userid {
+		db.Where("b_id = ?", bookid).First(&book)
+		if book.BID == bookid {
+			fmt.Println("wait a moment...")
+			loan := Loan{
+				UID: userid,
+				BID: bookid,
+				Time: time.Now(),
+			}
+			db.Create(&loan)
+			fmt.Println("loan seccess")
+		}else{
+			fmt.Println("not have this book.")
+		}
+	}else {
+		fmt.Println("not have this user.")
+	}
 }
 
 func Lib(db *gorm.DB){
@@ -281,7 +301,12 @@ func Lib(db *gorm.DB){
 			}else {
 				fmt.Println("you dont have access")
 			}
-			
+		}
+		if help == 7 {
+			var bookid, userid int 
+			fmt.Scan(&bookid, &userid)
+			loanBook(bookid, userid, db)
+
 		}
 	}
 }
@@ -290,5 +315,4 @@ func main() {
 	db := connectDB()
 	Migrate(db)
 	Lib(db)
-	
 }
