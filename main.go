@@ -286,12 +286,9 @@ func Lib(db *gorm.DB){
 	}
 }
 
-
-
-
 func main() {
 	db := connectDB()
 	Migrate(db)
-	// Lib(db)
+	Lib(db)
 	
 }
