@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -15,43 +16,43 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type LoanInfo struct {
-    UserName  string
-    BookTitle string
-    LoanTime  time.Time
+	UserName  string
+	BookTitle string
+	LoanTime  time.Time
 }
 
 type Book struct {
-	BID int `gorm:"primary_key"`
-	Title string `gorm:"type:varchar(50)"`
-	Author string `gorm:"type:varchar(50)"`
-	PublisherYear int `gorm:"NOTNULL"`
-	Genres string `gorm:"type:varchar(50)"`
-	Price int `gorm:"NOTNULLBID"`
+	BID           int    `gorm:"primary_key"`
+	Title         string `gorm:"type:varchar(50)"`
+	Author        string `gorm:"type:varchar(50)"`
+	PublisherYear int    `gorm:"NOTNULL"`
+	Genres        string `gorm:"type:varchar(50)"`
+	Price         int    `gorm:"NOTNULLBID"`
 }
 
-type Library struct{
-	Name string `gorm:"type:varchar(50)"`
-	LId int `gorm:"primarykey"`
+type Library struct {
+	Name     string `gorm:"type:varchar(50)"`
+	LId      int    `gorm:"primarykey"`
 	Password string `gorm:"notnull,unique"`
-	IsPro bool `gorm:"default = true"`
+	IsPro    bool   `gorm:"default = true"`
 }
 
 type User struct {
 	ID   int    `gorm:"primaryKey"`
 	Name string `gorm:"type:varchar(50)"`
-	Age  int `gorm:"check:Age,Age >= 8"`
-	Nid string `gorm:"varchar(10)"`
+	Age  int    `gorm:"check:Age,Age >= 8"`
+	Nid  string `gorm:"varchar(10)"`
 }
 
-type Manager struct{
-	MID int `gorm:"primarykey"`
+type Manager struct {
+	MID  int    `gorm:"primarykey"`
 	Name string `gorm:"type:varchar(50)"`
-	Age  int `gorm:"check:Age, Age >= 25"`
+	Age  int    `gorm:"check:Age, Age >= 25"`
 }
 
 type Loan struct {
-	UID int 
-	BID int
+	UID  int
+	BID  int
 	Time time.Time
 	User User `gorm:"foreignKey:UID;references:ID"`
 	Book Book `gorm:"foreignKey:BID;references:BID"`
@@ -67,7 +68,7 @@ func connectDB() *gorm.DB {
 }
 
 func Migrate(db *gorm.DB) {
-  err := db.AutoMigrate(&User{})
+	err := db.AutoMigrate(&User{})
 	if err != nil {
 		log.Fatal("User not connect to database.")
 	}
@@ -94,37 +95,61 @@ func Migrate(db *gorm.DB) {
 	fmt.Println("Loan connect to database.")
 }
 
-func addUser(db *gorm.DB){
-	var id, age int 
+func AddManager(db *gorm.DB) {
+	fmt.Println("Enter password : ")
+	var password string
+	fmt.Scanln(&password)
+	fmt.Println("wait a moment...")
+	if checkLib(password, db) {
+
+		var mid, age int
+		var name string
+		fmt.Println("you have access. enter new information : ")
+		fmt.Scan(&mid, &age)
+		fmt.Scan(&name)
+		manager := Manager{
+			MID:  mid,
+			Name: name,
+			Age:  age,
+		}
+
+		db.Create(&manager)
+	} else {
+		fmt.Println("you dont have access")
+	}
+}
+
+func addUser(db *gorm.DB) {
+	var id, age int
 	var name, nid string
 	fmt.Scan(&id, &age)
 	fmt.Scan(&nid, &name)
 	user := User{
-		ID: id,
+		ID:   id,
 		Name: name,
-		Age: age,
-		Nid: nid,
+		Age:  age,
+		Nid:  nid,
 	}
 	db.Create(&user)
 }
 
-func addBook(db *gorm.DB){
-	var id, pub, pric int 
+func addBook(db *gorm.DB) {
+	var id, pub, pric int
 	var title, auth, gen string
 	fmt.Scan(&id, &pub, &pric)
 	fmt.Scan(&title, &auth, &gen)
 	book := Book{
-		BID: id,
-		Title: title,
-		Author: auth,
+		BID:           id,
+		Title:         title,
+		Author:        auth,
 		PublisherYear: pub,
-		Genres: gen,
-		Price: pric,
+		Genres:        gen,
+		Price:         pric,
 	}
 	db.Create(&book)
 }
 
-func printpos(){
+func printpos() {
 	fmt.Println(`
 1 : Add Book 
 2 : Add User
@@ -139,61 +164,61 @@ func printpos(){
 0 : Close`)
 }
 
-func serchUser(db *gorm.DB){
+func serchUser(db *gorm.DB) {
 	fmt.Println("search on user : ")
-			fmt.Println(`
+	fmt.Println(`
 1 : Age
 2 : Name
 3 : id
 4 : nid`)
 	var che int
-	fmt.Scanln(&che) 
-	if che == 1 || che == 3{
+	fmt.Scanln(&che)
+	if che == 1 || che == 3 {
 		if che == 1 {
-		fmt.Println("enter age : ")
-		fmt.Scan(&che)
-		user := User{}
-		db.Where("Age = ?", che).Find(&user)
-		fmt.Println("User is : ", user)
-		}else{
-		fmt.Println("enter id : ")
-		fmt.Scan(&che)
-		user := User{}
-		db.Where("ID = ?", che).Find(&user)
-		fmt.Println(user)
+			fmt.Println("enter age : ")
+			fmt.Scan(&che)
+			user := User{}
+			db.Where("Age = ?", che).Find(&user)
+			fmt.Println("User is : ", user)
+		} else {
+			fmt.Println("enter id : ")
+			fmt.Scan(&che)
+			user := User{}
+			db.Where("ID = ?", che).Find(&user)
+			fmt.Println(user)
 		}
 	}
-	if che == 2 || che == 4{
+	if che == 2 || che == 4 {
 		if che == 2 {
-		fmt.Println("enter name : ")
-		var cheS string
-		fmt.Scan(&cheS)
-		user := User{}
-		db.Where("Name = ?", cheS).Find(&user)
-		fmt.Println("User is : ", user)
-		}else{
-		fmt.Println("enter Nid : ")
-		var cheS string
-		fmt.Scan(&cheS)
-		user := User{}
-		db.Where("Nid = ?", cheS).Find(&user)
-		fmt.Println(user)
+			fmt.Println("enter name : ")
+			var cheS string
+			fmt.Scan(&cheS)
+			user := User{}
+			db.Where("Name = ?", cheS).Find(&user)
+			fmt.Println("User is : ", user)
+		} else {
+			fmt.Println("enter Nid : ")
+			var cheS string
+			fmt.Scan(&cheS)
+			user := User{}
+			db.Where("Nid = ?", cheS).Find(&user)
+			fmt.Println(user)
 		}
 	}
 }
 
-func searchBook(db *gorm.DB){
+func searchBook(db *gorm.DB) {
 	fmt.Println("search on Book : ")
-			fmt.Println(`
+	fmt.Println(`
 1 : Bid
 2 : Title
 3 : Publish year
 4 : Price
 5 : Author
 6 : Genres`)
-	book := []Book{}	
+	book := []Book{}
 	var che int
-	fmt.Scanln(&che) 
+	fmt.Scanln(&che)
 	if che == 1 {
 		var set int
 		fmt.Println("Enter Book ID : ")
@@ -236,7 +261,7 @@ func searchBook(db *gorm.DB){
 		db.Where("Generes = ?", set).Find(&book)
 		fmt.Println(book)
 	}
-	
+
 }
 
 func checkLib(password string, db *gorm.DB) bool {
@@ -245,7 +270,7 @@ func checkLib(password string, db *gorm.DB) bool {
 	return password == lib.Password
 }
 
-func loanBook(bookid int, userid int, db *gorm.DB){
+func loanBook(bookid int, userid int, db *gorm.DB) {
 	user := User{}
 	book := Book{}
 	db.Where("id = ?", userid).First(&user)
@@ -254,16 +279,16 @@ func loanBook(bookid int, userid int, db *gorm.DB){
 		if book.BID == bookid {
 			fmt.Println("wait a moment...")
 			loan := Loan{
-				UID: userid,
-				BID: bookid,
+				UID:  userid,
+				BID:  bookid,
 				Time: time.Now(),
 			}
 			db.Create(&loan)
 			fmt.Println("loan seccess")
-		}else{
+		} else {
 			fmt.Println("not have this book.")
 		}
-	}else {
+	} else {
 		fmt.Println("not have this user.")
 	}
 }
@@ -272,15 +297,15 @@ func AllUser(db *gorm.DB) {
 	user := []User{}
 	var can, i int64
 	db.Find(&user).Count(&can)
-	for i = 0; i < can; i++{
-		fmt.Print("user number : ", i + 1, " is : \n", "user id is : ", user[i].ID, "\n", "user name is : ", user[i].Name, "\n", "user age is : ", user[i].Age, "\n", "user NID is : ", user[i].Nid, "\n\n")
+	for i = 0; i < can; i++ {
+		fmt.Print("user number : ", i+1, " is : \n", "user id is : ", user[i].ID, "\n", "user name is : ", user[i].Name, "\n", "user age is : ", user[i].Age, "\n", "user NID is : ", user[i].Nid, "\n\n")
 	}
 }
 
-func Lib(db *gorm.DB){
-	for on := 1 ; on != 0; {
+func Lib(db *gorm.DB) {
+	for on := 1; on != 0; {
 		printpos()
-		var help int 
+		var help int
 		fmt.Println("enter you pos")
 		fmt.Scan(&help)
 		if help == 0 {
@@ -299,29 +324,10 @@ func Lib(db *gorm.DB){
 			searchBook(db)
 		}
 		if help == 5 {
-			fmt.Println("Enter password : ")
-			var password string 
-			fmt.Scanln(&password)
-			fmt.Println("wait a moment...")
-			if checkLib(password, db) {
-
-				var mid, age int
-				var name string
-				fmt.Println("you have access. enter new information : ")
-				fmt.Scan(&mid, &age)
-				fmt.Scan(&name)
-				manager := Manager{
-					MID: mid,
-					Name: name,
-					Age: age,			
-				}
-				db.Create(&manager)
-			}else {
-				fmt.Println("you dont have access")
-			}
+			AddManager(db)
 		}
 		if help == 7 {
-			var bookid, userid int 
+			var bookid, userid int
 			fmt.Scan(&bookid, &userid)
 			loanBook(bookid, userid, db)
 
@@ -330,7 +336,7 @@ func Lib(db *gorm.DB){
 			AllUser(db)
 		}
 
-		if help == 9{
+		if help == 9 {
 			BookLoans(db)
 		}
 	}
@@ -338,20 +344,20 @@ func Lib(db *gorm.DB){
 
 func BookLoans(db *gorm.DB) {
 	var results []LoanInfo
-	err := db.Table("loans"). 
-	Select("users.name as user_name, books.title as book_title, loans.time as loan_time").
-	Joins("join users on users.id = loans.uid").
-	Joins("join books on books.b_id = loans.b_id").
-	Scan(&results).Error
+	err := db.Table("loans").
+		Select("users.name as user_name, books.title as book_title, loans.time as loan_time").
+		Joins("join users on users.id = loans.uid").
+		Joins("join books on books.b_id = loans.b_id").
+		Scan(&results).Error
 
 	if err != nil {
 		fmt.Println("Error fetching loans:", err)
-        return
+		return
 	}
 
 	for _, loan := range results {
-        fmt.Printf("User: %s | Book: %s | Loan Time: %s\n", loan.UserName, loan.BookTitle, loan.LoanTime.Format(time.RFC3339))
-    }
+		fmt.Printf("User: %s | Book: %s | Loan Time: %s\n", loan.UserName, loan.BookTitle, loan.LoanTime.Format(time.RFC3339))
+	}
 }
 func main() {
 	db := connectDB()
