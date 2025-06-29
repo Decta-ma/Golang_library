@@ -14,6 +14,12 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
+type LoanInfo struct {
+    UserName  string
+    BookTitle string
+    LoanTime  time.Time
+}
+
 type Book struct {
 	BID int `gorm:"primary_key"`
 	Title string `gorm:"type:varchar(50)"`
@@ -267,7 +273,7 @@ func AllUser(db *gorm.DB) {
 	var can, i int64
 	db.Find(&user).Count(&can)
 	for i = 0; i < can; i++{
-		fmt.Println(" user number : ", i + 1, "is : \n", "user id is : ", user[i].ID, "\n", "user name is : ", user[i].Name, "\n", "user age is : ", user[i].Age, "\n", "user NID is : ", user[i].Nid, "\n")
+		fmt.Print("user number : ", i + 1, " is : \n", "user id is : ", user[i].ID, "\n", "user name is : ", user[i].Name, "\n", "user age is : ", user[i].Age, "\n", "user NID is : ", user[i].Nid, "\n\n")
 	}
 }
 
@@ -323,9 +329,30 @@ func Lib(db *gorm.DB){
 		if help == 8 {
 			AllUser(db)
 		}
+
+		if help == 9{
+			BookLoans(db)
+		}
 	}
 }
 
+func BookLoans(db *gorm.DB) {
+	var results []LoanInfo
+	err := db.Table("loans"). 
+	Select("users.name as user_name, books.title as book_title, loans.time as loan_time").
+	Joins("join users on users.id = loans.uid").
+	Joins("join books on books.b_id = loans.b_id").
+	Scan(&results).Error
+
+	if err != nil {
+		fmt.Println("Error fetching loans:", err)
+        return
+	}
+
+	for _, loan := range results {
+        fmt.Printf("User: %s | Book: %s | Loan Time: %s\n", loan.UserName, loan.BookTitle, loan.LoanTime.Format(time.RFC3339))
+    }
+}
 func main() {
 	db := connectDB()
 	Migrate(db)
