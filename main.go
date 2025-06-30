@@ -160,6 +160,8 @@ func printpos() {
 7 : loan book
 8 : All User
 9 : All Book // not write this part yet...
+10 : show user name and id in loan 
+11 : update user
 
 0 : Close`)
 }
@@ -175,34 +177,41 @@ func serchUser(db *gorm.DB) {
 	fmt.Scanln(&che)
 	if che == 1 || che == 3 {
 		if che == 1 {
+			var pos int
 			fmt.Println("enter age : ")
-			fmt.Scan(&che)
-			user := User{}
-			db.Where("Age = ?", che).Find(&user)
-			fmt.Println("User is : ", user)
+			fmt.Scan(&pos)
+			user := []User{}
+			db.Where("Age = ?", pos).Find(&user)
+			for i := 0; i < len(user); i++ {
+				fmt.Print("User is : ", i+1, "\nname is =>", user[i].Name, "\nage is =>", user[i].Age, "\nid is =>", user[i].ID, "\nnid is =>", user[i].Nid, "\n\n")
+			}
 		} else {
+			var pos int
 			fmt.Println("enter id : ")
-			fmt.Scan(&che)
+			fmt.Scan(&pos)
 			user := User{}
-			db.Where("ID = ?", che).Find(&user)
-			fmt.Println(user)
+			db.Where("ID = ?", pos).First(&user)
+			fmt.Println("user is => ", user)
 		}
 	}
 	if che == 2 || che == 4 {
 		if che == 2 {
 			fmt.Println("enter name : ")
-			var cheS string
-			fmt.Scan(&cheS)
-			user := User{}
-			db.Where("Name = ?", cheS).Find(&user)
-			fmt.Println("User is : ", user)
-		} else {
+			var posS string
+			fmt.Scan(&posS)
+			user := []User{}
+			db.Where("Name = ?", posS).Find(&user)
+			for i := 0; i < len(user); i++ {
+				fmt.Print("User is : ", i+1, "\nname is =>", user[i].Name, "\nage is =>", user[i].Age, "\nid is =>", user[i].ID, "\nnid is =>", user[i].Nid, "\n\n")
+			}
+		} 
+		if che == 4 {
 			fmt.Println("enter Nid : ")
-			var cheS string
-			fmt.Scan(&cheS)
+			var posS string
+			fmt.Scan(&posS)
 			user := User{}
-			db.Where("Nid = ?", cheS).Find(&user)
-			fmt.Println(user)
+			db.Where("Nid = ?", posS).First(&user)
+			fmt.Println("user is => ", user)
 		}
 	}
 }
@@ -302,46 +311,6 @@ func AllUser(db *gorm.DB) {
 	}
 }
 
-func Lib(db *gorm.DB) {
-	for on := 1; on != 0; {
-		printpos()
-		var help int
-		fmt.Println("enter you pos")
-		fmt.Scan(&help)
-		if help == 0 {
-			on = 0
-		}
-		if help == 1 {
-			addBook(db)
-		}
-		if help == 2 {
-			addUser(db)
-		}
-		if help == 3 {
-			serchUser(db)
-		}
-		if help == 4 {
-			searchBook(db)
-		}
-		if help == 5 {
-			AddManager(db)
-		}
-		if help == 7 {
-			var bookid, userid int
-			fmt.Scan(&bookid, &userid)
-			loanBook(bookid, userid, db)
-
-		}
-		if help == 8 {
-			AllUser(db)
-		}
-
-		if help == 9 {
-			BookLoans(db)
-		}
-	}
-}
-
 func BookLoans(db *gorm.DB) {
 	var results []LoanInfo
 	err := db.Table("loans").
@@ -359,6 +328,138 @@ func BookLoans(db *gorm.DB) {
 		fmt.Printf("User: %s | Book: %s | Loan Time: %s\n", loan.UserName, loan.BookTitle, loan.LoanTime.Format(time.RFC3339))
 	}
 }
+
+func showUserLoan(db *gorm.DB){
+	type Resualt struct{
+		Name string
+		ID int
+		Title string
+	}
+	var resualt []Resualt
+	db.Table("loans").Select("users.name, users.id, books.title").
+	Joins("join users on users.id = loans.uid").
+	Joins("join books on books.b_id = loans.b_id").
+	Scan(&resualt)
+	for i := 0; i < len(resualt); i++ {
+		fmt.Printf("User Name: %s | ID: %d | Books : %s\n", resualt[i].Name, resualt[i].ID, resualt[i].Title)
+	}
+}
+
+func getUserInput() int {
+	var pos int
+	fmt.Print("Enter your choice: ")
+	fmt.Scan(&pos)
+	return pos
+}
+
+func changeName(db *gorm.DB){
+	user := User{}
+	var id int
+	var name string
+	fmt.Println("enter your id and after that your name : ")
+	fmt.Scan(&id, &name)
+	db.Model(&user).Where("id = ?", id).Update("name", name)
+}
+
+
+func changeAge(db *gorm.DB){
+	user := User{}
+	var id, age int
+	fmt.Println("enter your id and after that your age : ")
+	fmt.Scan(&id, &age)
+	db.Model(&user).Where("id = ?", id).Update("age", age)
+}
+
+
+func changeNID(db *gorm.DB){
+	user := User{}
+	fmt.Println(`
+for National id i need all of your in formation so : 
+1 : enter id
+2 : enter name 
+3 : enter old National id 
+4 : your age.`)
+	var nid, name string
+	var id, age int
+	fmt.Scan(&id, &name, &nid, &age)
+	db.Where("id = ? and age = ? and nid = ? and name = ?", id, age, nid, name).First(&user)
+	if user.ID == id && user.Age == age && user.Nid == nid && user.Name == name {
+		var newNID string
+		fmt.Print("Enter your new National ID: ")
+		fmt.Scan(&newNID)
+		db.Model(&user).Where("id = ? and age = ? and nid = ? and name = ?", id, age, nid, name).Update("nid", newNID)
+	}
+}
+
+func changeAllInformation(db *gorm.DB){
+	user := User{}
+	fmt.Print("enter your natraul id : ")
+	var nid string
+	fmt.Scan(&nid)
+	db.Where("nid", nid).First(&user)
+	if user.Nid == nid{
+		fmt.Print("ok enter New name, New age and New id")
+		var Nname string
+		fmt.Scan(&Nname)
+		var Nage, Nnid int
+		fmt.Scan(&Nage, &Nnid)
+		db.Model(&user).Where("nid = ?", nid).Update("name", Nname)
+		db.Model(&user).Where("nid = ?", nid).Update("age", Nage)
+		db.Model(&user).Where("nid = ?", nid).Update("id", Nnid)
+	}
+}
+
+func updateUser(db *gorm.DB) {
+	fmt.Println(`
+1 : change name =>
+2 : change age => 
+3 : change nid =>
+4 : change all information =>`)
+	switch os := getUserInput(); os{
+	case 1: 
+		changeName(db)
+	case 2:
+		changeAge(db)
+	case 3:
+		changeNID(db)
+	case 4:
+		changeAllInformation(db)
+	}
+}
+
+func Lib(db *gorm.DB) {
+	for on := 1; on != 0; {
+		printpos()
+		switch pos := getUserInput(); pos {
+		case 0:
+			on = 0
+		case 1:
+			addBook(db)
+		case 2:
+			addUser(db)
+		case 3:
+			serchUser(db)
+		case 4:
+			searchBook(db)
+		case 5:
+			AddManager(db)
+		case 7:
+			var bookid, userid int
+			fmt.Scan(&bookid, &userid)
+			loanBook(bookid, userid, db)
+		case 8:
+			AllUser(db)
+		case 9:
+			BookLoans(db)
+		case 10:
+			showUserLoan(db)
+		case 11:
+			updateUser(db)	
+		}
+	}
+}
+
+
 func main() {
 	db := connectDB()
 	Migrate(db)
