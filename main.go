@@ -279,7 +279,10 @@ func checkLib(password string, db *gorm.DB) bool {
 	return password == lib.Password
 }
 
-func loanBook(bookid int, userid int, db *gorm.DB) {
+func loanBook(db *gorm.DB) {
+	fmt.Print("enter id of book and user : ")
+	var bookid, userid int
+	fmt.Scan(&bookid, &userid)
 	user := User{}
 	book := Book{}
 	db.Where("id = ?", userid).First(&user)
@@ -398,14 +401,13 @@ func changeAllInformation(db *gorm.DB){
 	fmt.Scan(&nid)
 	db.Where("nid", nid).First(&user)
 	if user.Nid == nid{
-		fmt.Print("ok enter New name, New age and New id")
+		fmt.Print("ok enter your name and age for changing =>")
 		var Nname string
 		fmt.Scan(&Nname)
-		var Nage, Nnid int
-		fmt.Scan(&Nage, &Nnid)
+		var Nage int
+		fmt.Scan(&Nage)
 		db.Model(&user).Where("nid = ?", nid).Update("name", Nname)
 		db.Model(&user).Where("nid = ?", nid).Update("age", Nage)
-		db.Model(&user).Where("nid = ?", nid).Update("id", Nnid)
 	}
 }
 
@@ -427,6 +429,28 @@ func updateUser(db *gorm.DB) {
 	}
 }
 
+
+func deleteUser(db *gorm.DB){
+	var pos int
+	fmt.Print("enter your pos : ")
+	fmt.Print(`
+1 : name
+2 : Age
+3 : id
+4 : NId`)
+	fmt.Print("\n")
+	fmt.Scan(&pos)
+	switch pos {
+	case 1:
+		var name string 
+		fmt.Scan(&name)
+		db.Where("name = ?", name).Delete(User{})
+	case 2:
+	case 3:
+	case 4:
+	}
+}
+
 func Lib(db *gorm.DB) {
 	for on := 1; on != 0; {
 		printpos()
@@ -444,9 +468,7 @@ func Lib(db *gorm.DB) {
 		case 5:
 			AddManager(db)
 		case 7:
-			var bookid, userid int
-			fmt.Scan(&bookid, &userid)
-			loanBook(bookid, userid, db)
+			loanBook(db)
 		case 8:
 			AllUser(db)
 		case 9:
@@ -455,6 +477,8 @@ func Lib(db *gorm.DB) {
 			showUserLoan(db)
 		case 11:
 			updateUser(db)	
+		case 12:
+			deleteUser(db)
 		}
 	}
 }
